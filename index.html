@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safari Mail Blaster</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c09;
+    --surface: #181510;
+    --card: #1e1a13;
+    --border: #2e2820;
+    --accent: #c8892a;
+    --accent2: #e8a83a;
+    --green: #2d7a4f;
+    --green-light: #3a9e65;
+    --red: #c0392b;
+    --text: #f0ead8;
+    --muted: #7a6e5c;
+    --input-bg: #13110d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--accent2);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .card:nth-child(2) { animation-delay: 0.08s; }
+  .card:nth-child(3) { animation-delay: 0.16s; grid-column: 1 / -1; }
+  .card:nth-child(4) { animation-delay: 0.22s; grid-column: 1 / -1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    color: var(--accent2);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title span { font-size: 18px; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--muted);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 140px;
+    line-height: 1.6;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Drop Zone ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(200,137,42,0.06);
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  .drop-icon { font-size: 36px; margin-bottom: 10px; }
+  .drop-label { font-size: 14px; color: var(--muted); }
+  .drop-label strong { color: var(--accent2); }
+
+  /* ── Contacts preview ── */
+  #contactsBox { display: none; }
+
+  .contacts-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(45,122,79,0.18);
+    border: 1px solid var(--green);
+    color: var(--green-light);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .contacts-list {
+    max-height: 160px;
+    overflow-y: auto;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+
+  .contacts-list::-webkit-scrollbar { width: 4px; }
+  .contacts-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+
+  .contact-item:hover { background: var(--border); }
+
+  .contact-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-light);
+    flex-shrink: 0;
+  }
+
+  .contact-name { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+  /* ── Send Button ── */
+  .send-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0e0c09;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .send-btn:hover:not(:disabled) {
+    background: var(--accent2);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(200,137,42,0.3);
+  }
+
+  .send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Progress ── */
+  .progress-wrap { display: none; margin-top: 16px; }
+
+  .progress-bar-bg {
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* ── Results ── */
+  #resultsBox { display: none; margin-top: 20px; }
+
+  .result-card {
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .result-success {
+    background: rgba(45,122,79,0.15);
+    border: 1px solid var(--green);
+  }
+
+  .result-error {
+    background: rgba(192,57,43,0.12);
+    border: 1px solid var(--red);
+  }
+
+  .result-icon { font-size: 28px; }
+  .result-title { font-weight: 600; font-size: 15px; }
+  .result-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .failed-list {
+    margin-top: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    color: #e07070;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+
+  /* ── SMTP toggle ── */
+  .smtp-toggle {
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  #smtpFields { display: none; }
+
+  .tip-box {
+    background: rgba(200,137,42,0.08);
+    border: 1px solid rgba(200,137,42,0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--accent2);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .tip-box strong { display: block; margin-bottom: 4px; }
+
+  /* ── Tab Buttons ── */
+  .tab-btn {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--border);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tab-btn:hover:not(.active) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #0e0c09;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🦁</div>
+  <div>
+    <div class="logo-text">Safari Mail Blaster</div>
+    <div class="logo-sub">Bulk Email Outreach Tool</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── Card 1: Upload Excel or Manual Entry ── -->
+  <div class="card">
+    <div class="card-title"><span>📂</span> Load Your Contacts</div>
+
+    <!-- Tab buttons -->
+    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+      <button id="tabUpload" class="tab-btn active" onclick="switchTab('upload')">📊 Upload File</button>
+      <button id="tabManual" class="tab-btn" onclick="switchTab('manual')">✍️ Manual Entry</button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="uploadTab">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <div class="drop-icon">📊</div>
+        <div class="drop-label">Drop your <strong>Excel or CSV</strong> file here<br>or click to browse</div>
+      </div>
+
+      <div id="uploadStatus" style="margin-top:12px;font-size:13px;color:var(--muted);"></div>
+    </div>
+
+    <!-- Manual Entry Tab -->
+    <div id="manualTab" style="display: none;">
+      <label>Enter Email Addresses</label>
+      <textarea id="manualEmails" placeholder="Enter emails (one per line or comma-separated)&#10;e.g.:&#10;john@example.com&#10;jane.smith@company.com&#10;contact@safari-lodge.com"></textarea>
+      
+      <label>Optional: Enter Names (comma-separated with emails)</label>
+      <textarea id="manualNames" placeholder="If you enter 'email,name' pairs (one per line), names will be used for personalization:&#10;john@example.com,John Davis&#10;jane@company.com,Jane Smith"></textarea>
+
+      <button class="send-btn" id="manualBtn" onclick="loadManualEmails()" style="margin-top: 8px; padding: 12px;">
+        ➕ LOAD EMAILS
+      </button>
+
+      <div id="manualStatus" style="margin-top:12px;font-size:13px;color:var(--muted);"></div>
+    </div>
+
+    <div id="contactsBox">
+      <div class="contacts-badge">
+        ✅ <span id="contactCount">0</span> contacts loaded
+      </div>
+      <div class="contacts-list" id="contactsList"></div>
+    </div>
+  </div>
+
+  <!-- ── Card 2: Sender Setup ── -->
+  <div class="card">
+    <div class="card-title"><span>⚙️</span> Sender Setup</div>
+
+    <div class="tip-box">
+      <strong>💡 Gmail users:</strong>
+      Use an <strong>App Password</strong> — not your normal password.<br>
+      Go to: Google Account → Security → 2-Step Verification → App Passwords
+    </div>
+
+    <label>Your Email Address</label>
+    <input type="email" id="senderEmail" placeholder="you@gmail.com">
+
+    <label>App Password / Email Password</label>
+    <input type="password" id="senderPass" placeholder="Your app password">
+
+    <span class="smtp-toggle" onclick="toggleSmtp()">⚙ Advanced SMTP settings</span>
+
+    <div id="smtpFields">
+      <div class="row2">
+        <div>
+          <label>SMTP Host</label>
+          <input type="text" id="smtpHost" value="smtp.gmail.com">
+        </div>
+        <div>
+          <label>SMTP Port</label>
+          <input type="number" id="smtpPort" value="587">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Card 3: Write Message ── -->
+  <div class="card">
+    <div class="card-title"><span>✍️</span> Compose Your Message</div>
+
+    <label>Email Subject</label>
+    <input type="text" id="subject" placeholder="e.g. Free Social Media Audit for Your Safari Camp">
+
+    <label>Message Body</label>
+    <textarea id="messageBody" placeholder="Write your email message here...
+
+Hi there,
+
+I noticed your safari business doesn't have a strong online presence yet...
+
+Best regards,
+[Your Name]"></textarea>
+
+    <div style="font-size:12px;color:var(--muted);margin-top:-10px;margin-bottom:16px;">
+      💡 If your Excel has a <strong>Name</strong> column, each email will be auto-personalised with "Hi [Name],"
+    </div>
+  </div>
+
+  <!-- ── Card 4: Send ── -->
+  <div class="card">
+    <div class="card-title"><span>🚀</span> Send to All Contacts</div>
+
+    <button class="send-btn" id="sendBtn" onclick="sendEmails()" disabled>
+      🦁 BLAST TO ALL CONTACTS
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel">Sending...</div>
+    </div>
+
+    <div id="resultsBox"></div>
+  </div>
+
+</div>
+
+<script>
+  let loadedContacts = [];
+
+  // ── Tab Switching ──────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    const uploadTab = document.getElementById('uploadTab');
+    const manualTab = document.getElementById('manualTab');
+    const tabUpload = document.getElementById('tabUpload');
+    const tabManual = document.getElementById('tabManual');
+
+    if (tab === 'upload') {
+      uploadTab.style.display = 'block';
+      manualTab.style.display = 'none';
+      tabUpload.classList.add('active');
+      tabManual.classList.remove('active');
+    } else {
+      uploadTab.style.display = 'none';
+      manualTab.style.display = 'block';
+      tabManual.classList.add('active');
+      tabUpload.classList.remove('active');
+    }
+  }
+
+  // ── Manual Email Entry ──────────────────────────────────────────────────────
+  function loadManualEmails() {
+    const emailsInput = document.getElementById('manualEmails').value.trim();
+    const namesInput = document.getElementById('manualNames').value.trim();
+    const status = document.getElementById('manualStatus');
+
+    if (!emailsInput) {
+      status.textContent = '❌ Please enter at least one email address';
+      status.style.color = '#e07070';
+      return;
+    }
+
+    // Parse emails (handle line breaks and commas)
+    const emailLines = emailsInput.split(/[\n,]+/).map(e => e.trim()).filter(e => e);
+    
+    // Parse names (email,name pairs)
+    const nameMap = {};
+    if (namesInput) {
+      const nameLines = namesInput.split('\n').map(l => l.trim()).filter(l => l);
+      nameLines.forEach(line => {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length >= 2) {
+          nameMap[parts[0]] = parts[1];
+        }
+      });
+    }
+
+    // Validate and parse emails
+    const contacts = [];
+    const failedEmails = [];
+    
+    emailLines.forEach(email => {
+      if (email && email.includes('@') && email.includes('.')) {
+        contacts.push({
+          email: email,
+          name: nameMap[email] || ''
+        });
+      } else if (email) {
+        failedEmails.push(email);
+      }
+    });
+
+    if (contacts.length === 0) {
+      status.textContent = '❌ No valid email addresses found';
+      status.style.color = '#e07070';
+      return;
+    }
+
+    loadedContacts = contacts;
+    status.textContent = `✅ Loaded ${contacts.length} valid email address(es)`;
+    status.style.color = 'var(--green-light)';
+
+    if (failedEmails.length > 0) {
+      status.textContent += ` (⚠️ ${failedEmails.length} invalid: ${failedEmails.join(', ')})`;
+    }
+
+    renderContacts(contacts);
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  // ── Drag & drop ────────────────────────────────────────────────────────────
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  });
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) handleFileUpload(e.target.files[0]);
+  });
+
+  // ── Upload & parse ─────────────────────────────────────────────────────────
+  async function handleFileUpload(file) {
+    const status = document.getElementById('uploadStatus');
+    status.textContent = '⏳ Reading file...';
+    status.style.color = 'var(--accent)';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res  = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        status.textContent = '❌ ' + (data.error || 'Upload failed');
+        status.style.color = '#e07070';
+        return;
+      }
+
+      loadedContacts = data.contacts;
+      status.textContent = `✅ "${file.name}" loaded — found column: "${data.email_column}"`;
+      status.style.color = 'var(--green-light)';
+
+      renderContacts(data.contacts);
+      document.getElementById('sendBtn').disabled = false;
+
+    } catch (err) {
+      status.textContent = '❌ Error: ' + err.message;
+      status.style.color = '#e07070';
+    }
+  }
+
+  function renderContacts(contacts) {
+    const escapeHtml = (value) => {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+
+    document.getElementById('contactCount').textContent = contacts.length;
+    const list = document.getElementById('contactsList');
+    list.innerHTML = contacts.map(c =>
+      `<div class="contact-item">
+        <div class="contact-dot"></div>
+        <span>${escapeHtml(c.email)}</span>
+        ${c.name ? `<span class="contact-name">${escapeHtml(c.name)}</span>` : ''}
+      </div>`
+    ).join('');
+    document.getElementById('contactsBox').style.display = 'block';
+  }
+
+  // ── SMTP toggle ────────────────────────────────────────────────────────────
+  function toggleSmtp() {
+    const el = document.getElementById('smtpFields');
+    const currentDisplay = window.getComputedStyle(el).display;
+    el.style.display = currentDisplay === 'none' ? 'block' : 'none';
+  }
+
+  // ── Send emails ────────────────────────────────────────────────────────────
+  async function sendEmails() {
+    const escapeHtml = (value) => {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+
+    const senderEmail = document.getElementById('senderEmail').value.trim();
+    const senderPass  = document.getElementById('senderPass').value.trim();
+    const subject     = document.getElementById('subject').value.trim();
+    const message     = document.getElementById('messageBody').value.trim();
+    const smtpHost    = document.getElementById('smtpHost').value.trim();
+    const smtpPort    = document.getElementById('smtpPort').value.trim();
+
+    if (!senderEmail) { alert('Please enter your email address'); return; }
+    if (!senderPass)  { alert('Please enter your password / app password'); return; }
+    if (!subject)     { alert('Please write a subject line'); return; }
+    if (!message)     { alert('Please write a message'); return; }
+    if (!loadedContacts.length) { alert('Please upload an Excel file or enter emails manually'); return; }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ SENDING...';
+
+    const pw = document.getElementById('progressWrap');
+    const pb = document.getElementById('progressBar');
+    const pl = document.getElementById('progressLabel');
+    pw.style.display = 'block';
+    pb.style.width = '10%';
+    pl.textContent = `Connecting to mail server...`;
+
+    // Animate progress while waiting
+    let prog = 10;
+    const ticker = setInterval(() => {
+      if (prog < 85) { prog += 2; pb.style.width = prog + '%'; }
+    }, 400);
+
+    try {
+      const res  = await fetch('/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_email: senderEmail,
+          sender_pass:  senderPass,
+          subject, message,
+          contacts:  loadedContacts,
+          smtp_host: smtpHost,
+          smtp_port: smtpPort
+        })
+      });
+
+      const data = await res.json();
+      clearInterval(ticker);
+      pb.style.width = '100%';
+
+      const box = document.getElementById('resultsBox');
+      box.style.display = 'block';
+
+      if (!res.ok || data.error) {
+        pl.textContent = 'Failed to send.';
+        const hintHtml = data.hint ? `<div style="margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5;">${escapeHtml(data.hint)}</div>` : '';
+        box.innerHTML = `
+          <div class="result-card result-error">
+            <div class="result-icon">❌</div>
+            <div>
+              <div class="result-title">Send Failed</div>
+              <div class="result-sub">${escapeHtml(data.error)}</div>
+              ${hintHtml}
+            </div>
+          </div>`;
+      } else {
+        pl.textContent = 'Done!';
+        let failedHtml = '';
+        if (data.failed_count > 0) {
+          failedHtml = `<div class="failed-list">${data.failed.map(f => `❌ ${f.email} — ${f.error}`).join('<br>')}</div>`;
+        }
+        box.innerHTML = `
+          <div class="result-card result-success">
+            <div class="result-icon">🎉</div>
+            <div>
+              <div class="result-title">${data.sent_count} emails sent successfully!</div>
+              <div class="result-sub">${data.failed_count > 0 ? `${data.failed_count} failed — see below` : 'All delivered 🚀'}</div>
+            </div>
+          </div>
+          ${failedHtml}`;
+      }
+
+    } catch (err) {
+      clearInterval(ticker);
+      document.getElementById('resultsBox').style.display = 'block';
+      document.getElementById('resultsBox').innerHTML = `
+        <div class="result-card result-error">
+          <div class="result-icon">⚠️</div>
+          <div>
+            <div class="result-title">Network Error</div>
+            <div class="result-sub">Make sure the Python server is running (python app.py)</div>
+          </div>
+        </div>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🦁 BLAST TO ALL CONTACTS';
+  }
+</script>
+</body>
+</html>
