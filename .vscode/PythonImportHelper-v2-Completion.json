@@ -1,0 +1,139 @@
+[
+    {
+        "label": "Flask",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "send_from_directory",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "smtplib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "smtplib",
+        "description": "smtplib",
+        "detail": "smtplib",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "ssl",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "ssl",
+        "description": "ssl",
+        "detail": "ssl",
+        "documentation": {}
+    },
+    {
+        "label": "MIMEText",
+        "importPath": "email.mime.text",
+        "description": "email.mime.text",
+        "isExtraImport": true,
+        "detail": "email.mime.text",
+        "documentation": {}
+    },
+    {
+        "label": "MIMEMultipart",
+        "importPath": "email.mime.multipart",
+        "description": "email.mime.multipart",
+        "isExtraImport": true,
+        "detail": "email.mime.multipart",
+        "documentation": {}
+    },
+    {
+        "label": "secure_filename",
+        "importPath": "werkzeug.utils",
+        "description": "werkzeug.utils",
+        "isExtraImport": true,
+        "detail": "werkzeug.utils",
+        "documentation": {}
+    },
+    {
+        "label": "index",
+        "kind": 2,
+        "importPath": "app",
+        "description": "app",
+        "peekOfCode": "def index():\n    return send_from_directory('.', 'index.html')\n@app.route('/upload', methods=['POST'])\ndef upload_excel():\n    \"\"\"Upload Excel and return list of emails found\"\"\"\n    if 'file' not in request.files:\n        return jsonify({'error': 'No file uploaded'}), 400\n    file = request.files['file']\n    if not file.filename.endswith(('.xlsx', '.xls', '.csv')):\n        return jsonify({'error': 'Please upload an Excel (.xlsx / .xls) or CSV file'}), 400",
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "upload_excel",
+        "kind": 2,
+        "importPath": "app",
+        "description": "app",
+        "peekOfCode": "def upload_excel():\n    \"\"\"Upload Excel and return list of emails found\"\"\"\n    if 'file' not in request.files:\n        return jsonify({'error': 'No file uploaded'}), 400\n    file = request.files['file']\n    if not file.filename.endswith(('.xlsx', '.xls', '.csv')):\n        return jsonify({'error': 'Please upload an Excel (.xlsx / .xls) or CSV file'}), 400\n    filename = secure_filename(file.filename)\n    filepath = os.path.join(UPLOAD_FOLDER, filename)\n    file.save(filepath)",
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "send_emails",
+        "kind": 2,
+        "importPath": "app",
+        "description": "app",
+        "peekOfCode": "def send_emails():\n    \"\"\"Send bulk emails via SMTP\"\"\"\n    data = request.get_json(silent=True) or {}\n    if not isinstance(data, dict):\n        return jsonify({'error': 'Invalid JSON payload'}), 400\n    smtp_host     = data.get('smtp_host', 'smtp.gmail.com')\n    try:\n        smtp_port = int(data.get('smtp_port', 587))\n    except (TypeError, ValueError):\n        return jsonify({'error': 'SMTP port must be a valid number'}), 400",
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "app",
+        "description": "app",
+        "peekOfCode": "app = Flask(__name__, static_folder='.')\nUPLOAD_FOLDER = 'uploads'\nos.makedirs(UPLOAD_FOLDER, exist_ok=True)\n# ── Routes ─────────────────────────────────────────────────────────────────────\n@app.route('/')\ndef index():\n    return send_from_directory('.', 'index.html')\n@app.route('/upload', methods=['POST'])\ndef upload_excel():\n    \"\"\"Upload Excel and return list of emails found\"\"\"",
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "UPLOAD_FOLDER",
+        "kind": 5,
+        "importPath": "app",
+        "description": "app",
+        "peekOfCode": "UPLOAD_FOLDER = 'uploads'\nos.makedirs(UPLOAD_FOLDER, exist_ok=True)\n# ── Routes ─────────────────────────────────────────────────────────────────────\n@app.route('/')\ndef index():\n    return send_from_directory('.', 'index.html')\n@app.route('/upload', methods=['POST'])\ndef upload_excel():\n    \"\"\"Upload Excel and return list of emails found\"\"\"\n    if 'file' not in request.files:",
+        "detail": "app",
+        "documentation": {}
+    }
+]
